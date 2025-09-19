@@ -1,6 +1,11 @@
+import type { DashboardServerData, Session, RecentActivity } from '@/types/auth';
+
 interface PageViewProps {
-  serverData: any;
+  serverData: DashboardServerData;
+  session: Session | null;
   selectedTab: string;
+  isLoggingOut: boolean;
+  isLoading: boolean;
   handleTabChange: (tab: string) => void;
   handleLogout: () => void;
   handleRefresh: () => void;
@@ -8,7 +13,10 @@ interface PageViewProps {
 
 export function DashboardView({
   serverData,
+  session,
   selectedTab,
+  isLoggingOut,
+  isLoading,
   handleTabChange,
   handleLogout,
   handleRefresh,
@@ -30,17 +38,22 @@ export function DashboardView({
               </h2>
             </div>
             <div className="flex items-center gap-4">
+              <span className="text-sm text-foreground/70">
+                {session?.user?.email}
+              </span>
               <button
                 onClick={handleRefresh}
                 className="text-sm text-foreground/70 hover:text-foreground"
+                disabled={isLoading}
               >
                 Refresh
               </button>
               <button
                 onClick={handleLogout}
-                className="rounded-md bg-foreground/10 px-3 py-2 text-sm font-medium text-foreground hover:bg-foreground/20"
+                disabled={isLoggingOut}
+                className="rounded-md bg-foreground/10 px-3 py-2 text-sm font-medium text-foreground hover:bg-foreground/20 disabled:opacity-50"
               >
-                Logout
+{isLoggingOut ? 'Signing out...' : 'Sign Out'}
               </button>
             </div>
           </div>
@@ -53,7 +66,7 @@ export function DashboardView({
             Welcome back, {serverData.user.name}!
           </h1>
           <p className="mt-2 text-foreground/60">
-            Here's what's happening with your projects
+            Here&apos;s what&apos;s happening with your projects
           </p>
         </div>
 
@@ -125,7 +138,7 @@ export function DashboardView({
                   Recent Activity
                 </h3>
                 <div className="space-y-3">
-                  {serverData.recentActivity.map((activity: any) => (
+                  {serverData.recentActivity.map((activity: RecentActivity) => (
                     <div
                       key={activity.id}
                       className="flex justify-between items-center py-2"
@@ -148,11 +161,16 @@ export function DashboardView({
               </h3>
               <div className="space-y-2">
                 <p className="text-foreground">
-                  <strong>Name:</strong> {serverData.user.name}
+                  <strong>Name:</strong> {session?.user?.name || serverData.user.name}
                 </p>
                 <p className="text-foreground">
-                  <strong>Email:</strong> {serverData.user.email}
+                  <strong>Email:</strong> {session?.user?.email || serverData.user.email}
                 </p>
+                {session?.user?.id && (
+                  <p className="text-foreground/60 text-sm">
+                    <strong>ID:</strong> {session.user.id}
+                  </p>
+                )}
               </div>
             </div>
 

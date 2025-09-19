@@ -1,10 +1,15 @@
 import { DashboardClient } from "./dashboard.client";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import type { User, DashboardServerData } from '@/types/auth';
 
-export async function getDashboardData() {
+export async function getDashboardData(user: User): Promise<DashboardServerData> {
   return {
     user: {
-      name: "User",
-      email: "user@example.com",
+      name: user.name || "User",
+      email: user.email,
+      id: user.id,
     },
     stats: {
       totalProjects: 12,
@@ -20,6 +25,14 @@ export async function getDashboardData() {
 }
 
 export async function DashboardServer() {
-  const serverData = await getDashboardData();
-  return <DashboardClient serverData={serverData} />;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/auth");
+  }
+
+  const serverData = await getDashboardData(session.user);
+  return <DashboardClient serverData={serverData} session={session} />;
 }

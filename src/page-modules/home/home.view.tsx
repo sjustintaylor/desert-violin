@@ -1,13 +1,25 @@
+import type { HomeServerData, Session } from '@/types/auth';
+
 interface PageViewProps {
-  serverData: any;
+  serverData: HomeServerData;
+  session: Session | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   handleLogin: () => void;
   handleRegister: () => void;
+  handleGoToDashboard: () => void;
+  handleSignOut: () => void;
 }
 
 export function HomeView({
   serverData,
+  session,
+  isLoading,
+  isAuthenticated,
   handleLogin,
   handleRegister,
+  handleGoToDashboard,
+  handleSignOut,
 }: PageViewProps) {
   return (
     <div className="min-h-screen bg-background">
@@ -20,20 +32,49 @@ export function HomeView({
             <p className="mt-6 text-lg leading-8 text-foreground/70">
               {serverData.tagline}
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <button
-                onClick={handleLogin}
-                className="rounded-md bg-foreground px-3.5 py-2.5 text-sm font-semibold text-background shadow-sm hover:bg-foreground/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-              >
-                Login
-              </button>
-              <button
-                onClick={handleRegister}
-                className="text-sm font-semibold leading-6 text-foreground hover:text-foreground/80"
-              >
-                Register <span aria-hidden="true">→</span>
-              </button>
-            </div>
+
+            {isLoading ? (
+              <div className="mt-10">
+                <div className="text-sm text-foreground/70">Loading...</div>
+              </div>
+            ) : isAuthenticated ? (
+              <div className="mt-10">
+                <div className="mb-6">
+                  <p className="text-lg text-foreground/80">
+                    Welcome back, {session?.user?.name || session?.user?.email}!
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-x-6">
+                  <button
+                    onClick={handleGoToDashboard}
+                    className="rounded-md bg-foreground px-3.5 py-2.5 text-sm font-semibold text-background shadow-sm hover:bg-foreground/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                  >
+                    Go to Dashboard
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="text-sm font-semibold leading-6 text-foreground hover:text-foreground/80"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-10 flex items-center justify-center gap-x-6">
+                <button
+                  onClick={handleLogin}
+                  className="rounded-md bg-foreground px-3.5 py-2.5 text-sm font-semibold text-background shadow-sm hover:bg-foreground/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={handleRegister}
+                  className="text-sm font-semibold leading-6 text-foreground hover:text-foreground/80"
+                >
+                  Register <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -2,6 +2,8 @@
 
 version: "3"
 
+dotenv: [".env.local"]
+
 tasks:
   default:
     desc: Show available tasks
@@ -29,3 +31,27 @@ tasks:
     desc: Run ESLint
     cmds:
       - pnpm lint
+  typecheck:
+    cmds:
+      - pnpm tsc
+
+  # Database and Auth tasks
+  db:generate:
+    desc: Generate Drizzle schema migrations
+    cmds:
+      - pnpm drizzle-kit generate
+
+  db:migrate:
+    desc: Run database migrations
+    cmds:
+      - pnpm drizzle-kit migrate
+
+  db:studio:
+    desc: Open Drizzle Studio
+    cmds:
+      - pnpm drizzle-kit studio
+
+  auth:schema:
+    desc: Generate Better Auth schema
+    cmds:
+      - pnpm @better-auth/cli generate --config src/lib/auth.ts

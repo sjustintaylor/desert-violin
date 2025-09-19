@@ -2,9 +2,15 @@
 
 import { DashboardView } from "./dashboard.view";
 import { useDashboard } from "./dashboard.hook";
+import type { DashboardServerData, Session } from '@/types/auth';
 
-export function DashboardClient({ serverData }: { serverData: any }) {
-  const pageLogic = useDashboard({ serverData });
+interface DashboardClientProps {
+  serverData: DashboardServerData;
+  session: Session;
+}
+
+export function DashboardClient({ serverData, session }: DashboardClientProps) {
+  const pageLogic = useDashboard({ serverData, session });
 
   return <DashboardView {...pageLogic} />;
 }
