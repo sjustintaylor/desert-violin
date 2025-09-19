@@ -1,6 +1,6 @@
 # Desert Violin - Modular Next.js Architecture
 
-A Next.js application implementing a modular page architecture that separates concerns for maintainability, testability, and scalability.
+A Next.js 15 application with a **fully implemented** modular page architecture that separates concerns for maintainability, testability, and scalability. This project demonstrates a working example of the modular pattern in action.
 
 ## Architecture Philosophy
 
@@ -19,33 +19,24 @@ This project follows a **separation of concerns** principle where the Next.js `a
 ```
 src/
 ├── app/                          # Next.js App Router (minimal route definitions)
+│   ├── layout.tsx                # Root layout with Geist fonts
 │   ├── page.tsx                  # Home route - delegates to home page module
-│   ├── about/page.tsx            # About route - delegates to about page module
-│   └── dashboard/page.tsx        # Dashboard route - delegates to dashboard page module
+│   ├── dashboard/page.tsx        # Dashboard route - delegates to dashboard page module
+│   └── globals.css               # Global Tailwind CSS styles
 │
-├── page-modules/                 # Business logic organized by page and concern
+├── page-modules/                 # Business logic organized by page and concern (IMPLEMENTED)
 │   ├── home/
-│   │   ├── home.server.ts        # Server-side logic and data fetching
-│   │   ├── home.client.ts        # Client mounting component (wires hook + view)
-│   │   ├── home.view.ts          # Pure UI components
-│   │   ├── home.hook.ts          # useHome hook with ALL client-side logic
-│   │   └── components/           # Home-specific components
-│   │       ├── HeroSection.tsx
-│   │       └── FeatureGrid.tsx
-│   ├── about/
-│   │   ├── about.server.ts
-│   │   ├── about.client.ts
-│   │   ├── about.view.ts
-│   │   ├── about.hook.ts
-│   │   └── components/
+│   │   ├── home.server.tsx       # Server-side logic and components
+│   │   ├── home.client.tsx       # Client mounting component (wires hook + view)
+│   │   ├── home.view.tsx         # Pure UI components
+│   │   └── home.hook.ts          # useHome hook with ALL client-side logic
 │   └── dashboard/
-│       ├── dashboard.server.ts
-│       ├── dashboard.client.ts
-│       ├── dashboard.view.ts
-│       ├── dashboard.hook.ts
-│       └── components/
+│       ├── dashboard.server.tsx  # Server-side logic and components
+│       ├── dashboard.client.tsx  # Client mounting component (wires hook + view)
+│       ├── dashboard.view.tsx    # Pure UI components with tab navigation
+│       └── dashboard.hook.ts     # useDashboard hook with tab and navigation logic
 │
-└── shared/                       # Shared utilities and components
+└── shared/                       # Shared utilities and components (to be added)
     ├── components/               # Reusable components across pages
     ├── hooks/                    # Shared custom hooks
     └── utils/                    # Utility functions
@@ -53,52 +44,75 @@ src/
 
 ## File Type Definitions
 
-### `{pageName}.server.ts`
+### `{pageName}.server.tsx`
 **Purpose**: Server-side logic, data fetching, and server components
 ```typescript
-// Example: home.server.ts
+// Example: home.server.tsx (ACTUAL IMPLEMENTATION)
+import { HomeClient } from "./home.client";
+
 export async function getHomeData() {
-  const data = await fetch('/api/data');
-  return data.json();
+  return {
+    title: "Desert Violin",
+    description: "Welcome to your application",
+    tagline: "The future of web development starts here",
+  };
 }
 
-export function HomeServerComponent({ data }: { data: any }) {
-  return <div>Server-rendered content: {data.title}</div>;
+export async function HomeServer() {
+  const serverData = await getHomeData();
+  return <HomeClient serverData={serverData} />;
 }
 ```
 
-### `{pageName}.client.ts`
+### `{pageName}.client.tsx`
 **Purpose**: Client mounting component that wires together the page hook and view
 ```typescript
-// Example: home.client.ts
-'use client';
+// Example: home.client.tsx (ACTUAL IMPLEMENTATION)
+"use client";
 
-import { PageView } from './home.view';
-import { useHome } from './home.hook';
+import { HomeView } from "./home.view";
+import { useHome } from "./home.hook";
 
-export function ClientMount({ serverData }: { serverData: any }) {
+export function HomeClient({ serverData }: { serverData: any }) {
   const pageLogic = useHome({ serverData });
 
-  return <PageView {...pageLogic} />;
+  return <HomeView {...pageLogic} />;
 }
 ```
 
-### `{pageName}.view.ts`
+### `{pageName}.view.tsx`
 **Purpose**: Pure UI components with no business logic
 ```typescript
-// Example: home.view.ts
+// Example: home.view.tsx (ACTUAL IMPLEMENTATION)
 interface PageViewProps {
-  data: any;
-  onSubmit: (data: FormData) => void;
+  serverData: any;
+  handleLogin: () => void;
+  handleRegister: () => void;
 }
 
-export function PageView({ data, onSubmit }: PageViewProps) {
+export function HomeView({
+  serverData,
+  handleLogin,
+  handleRegister,
+}: PageViewProps) {
   return (
-    <div>
-      <h1>{data.title}</h1>
-      <form onSubmit={onSubmit}>
-        {/* UI elements */}
-      </form>
+    <div className="min-h-screen bg-background">
+      <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
+              {serverData.title}
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-foreground/70">
+              {serverData.tagline}
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <button onClick={handleLogin} className="...">Login</button>
+              <button onClick={handleRegister} className="...">Register</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -107,35 +121,53 @@ export function PageView({ data, onSubmit }: PageViewProps) {
 ### `{pageName}.hook.ts`
 **Purpose**: Contains the main `use{PageName}` hook with all client-side logic for the page
 ```typescript
-// Example: home.hook.ts
-import { useState, useEffect } from 'react';
+// Example: home.hook.ts (ACTUAL IMPLEMENTATION)
+import { useRouter } from 'next/navigation';
 
 export function useHome({ serverData }: { serverData: any }) {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({});
+  const router = useRouter();
 
-  const handleSubmit = (data: FormData) => {
-    setLoading(true);
-    // Client-side form handling logic
-    console.log('Submitting:', data);
-    setLoading(false);
+  const handleLogin = () => {
+    router.push('/dashboard');
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleRegister = () => {
+    router.push('/dashboard');
   };
-
-  useEffect(() => {
-    // Any page-specific effects
-  }, [serverData]);
 
   return {
-    // All props needed by PageView
-    loading,
-    formData,
     serverData,
-    handleSubmit,
-    handleInputChange,
+    handleLogin,
+    handleRegister,
+  };
+}
+
+// Example: dashboard.hook.ts (ACTUAL IMPLEMENTATION)
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export function useDashboard({ serverData }: { serverData: any }) {
+  const [selectedTab, setSelectedTab] = useState('overview');
+  const router = useRouter();
+
+  const handleTabChange = (tab: string) => {
+    setSelectedTab(tab);
+  };
+
+  const handleLogout = () => {
+    router.push('/');
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  return {
+    serverData,
+    selectedTab,
+    handleTabChange,
+    handleLogout,
+    handleRefresh,
   };
 }
 ```
@@ -147,112 +179,80 @@ export function useHome({ serverData }: { serverData: any }) {
 
 ## Implementation Examples
 
-### Current Monolithic Approach (Before)
+### Actual Working Implementation
+
+This project demonstrates the modular architecture in action with two working pages: Home and Dashboard.
+
 ```typescript
-// app/page.tsx - Everything mixed together
-export default function Home() {
-  const [state, setState] = useState(); // Client state
-  const data = fetchServerData();       // Server logic
+// app/page.tsx - Minimal route delegation (ACTUAL CODE)
+import { HomeServer } from "@/page-modules/home/home.server";
 
-  const handleClick = () => {           // Client logic
-    // Event handling
-  };
-
-  return (                              // View logic
-    <div>
-      <h1>{data.title}</h1>
-      <button onClick={handleClick}>Click</button>
-    </div>
-  );
-}
-```
-
-### Modular Approach (After)
-```typescript
-// app/page.tsx - Minimal route definition
-import { getHomeData, HomeServerComponent } from '@/page-modules/home/home.server';
-import { ClientMount } from '@/page-modules/home/home.client';
-
-export default async function Home() {
-  const serverData = await getHomeData();
-
-  return (
-    <div>
-      <HomeServerComponent data={serverData} />
-      <ClientMount serverData={serverData} />
-    </div>
-  );
-}
+export default HomeServer;
 ```
 
 ```typescript
-// page-modules/home/home.server.ts
+// app/dashboard/page.tsx - Minimal route delegation (ACTUAL CODE)
+import { DashboardServer } from "@/page-modules/dashboard/dashboard.server";
+
+export default DashboardServer;
+```
+
+```typescript
+// page-modules/home/home.server.tsx - Server logic and data (ACTUAL CODE)
+import { HomeClient } from "./home.client";
+
 export async function getHomeData() {
-  // Server-side data fetching
-  return { title: 'Welcome Home', items: [] };
+  return {
+    title: "Desert Violin",
+    description: "Welcome to your application",
+    tagline: "The future of web development starts here",
+  };
 }
 
-export function HomeServerComponent({ data }) {
-  // Server component rendering
-  return <h1>{data.title}</h1>;
+export async function HomeServer() {
+  const serverData = await getHomeData();
+  return <HomeClient serverData={serverData} />;
 }
 ```
 
 ```typescript
-// page-modules/home/home.client.ts
-'use client';
+// page-modules/home/home.client.tsx - Client mounting (ACTUAL CODE)
+"use client";
 
-import { PageView } from './home.view';
-import { useHome } from './home.hook';
+import { HomeView } from "./home.view";
+import { useHome } from "./home.hook";
 
-export function ClientMount({ serverData }: { serverData: any }) {
+export function HomeClient({ serverData }: { serverData: any }) {
   const pageLogic = useHome({ serverData });
 
-  return <PageView {...pageLogic} />;
+  return <HomeView {...pageLogic} />;
 }
 ```
 
 ```typescript
-// page-modules/home/home.hook.ts
-import { useState } from 'react';
+// page-modules/home/home.hook.ts - Client logic (ACTUAL CODE)
+import { useRouter } from 'next/navigation';
 
 export function useHome({ serverData }: { serverData: any }) {
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (data: FormData) => {
-    setLoading(true);
-    // All client-side logic goes here
-    console.log('Submitting:', data);
-    setLoading(false);
+  const handleLogin = () => {
+    router.push('/dashboard');
+  };
+
+  const handleRegister = () => {
+    router.push('/dashboard');
   };
 
   return {
     serverData,
-    loading,
-    handleSubmit,
+    handleLogin,
+    handleRegister,
   };
 }
 ```
 
-```typescript
-// page-modules/home/home.view.ts
-interface PageViewProps {
-  serverData: any;
-  loading: boolean;
-  handleSubmit: (data: FormData) => void;
-}
-
-export function PageView({ serverData, loading, handleSubmit }: PageViewProps) {
-  return (
-    <div>
-      <h2>{serverData.title}</h2>
-      <button disabled={loading} onClick={() => handleSubmit(new FormData())}>
-        {loading ? 'Loading...' : 'Submit'}
-      </button>
-    </div>
-  );
-}
-```
+The Dashboard page includes more complex features like tab navigation, state management, and user interactions, demonstrating the scalability of this pattern.
 
 ## Guidelines & Best Practices
 
@@ -273,28 +273,53 @@ export function PageView({ serverData, loading, handleSubmit }: PageViewProps) {
 
 ### Import/Export Patterns
 ```typescript
-// ✅ Good: Clean exports from page modules
-export { getHomeData, HomeServerComponent } from './home.server';
-export { ClientMount } from './home.client';
-export { PageView } from './home.view';
+// ✅ Actual implementation pattern: Direct server component export
+export { HomeServer } from './home.server';
+export { HomeClient } from './home.client';
+export { HomeView } from './home.view';
 export { useHome } from './home.hook';
 
-// ✅ Good: app/page.tsx imports only what it needs
-import { getHomeData, HomeServerComponent } from '@/page-modules/home/home.server';
-import { ClientMount } from '@/page-modules/home/home.client';
+// ✅ Actual app/page.tsx import pattern
+import { HomeServer } from "@/page-modules/home/home.server";
+export default HomeServer;
+
+// ✅ Internal page module imports
+import { HomeClient } from "./home.client";  // server imports client
+import { HomeView } from "./home.view";      // client imports view
+import { useHome } from "./home.hook";       // client imports hook
 ```
 
 ### Client Mounting Pattern
-- **{pageName}.client.ts role**: Only responsible for mounting - calls `use{PageName}` and renders `PageView`
+- **{pageName}.client.tsx role**: Only responsible for mounting - calls `use{PageName}` and renders `PageView`
 - **'use client' directive**: Should be the only place this directive appears for the page
 - **No logic**: Should contain no business logic, state, or event handlers
-- **Data flow**: `app/page.tsx` → `ClientMount` → `use{PageName}` → `PageView`
+- **Data flow**: `app/page.tsx` → `{PageName}Server` → `{PageName}Client` → `use{PageName}` → `PageView`
 
 ### Testing Strategies
 - **Server logic**: Test data fetching and server component rendering
 - **use{PageName} hook**: Test all client-side logic by testing the page-specific hook in isolation
 - **View components**: Test UI rendering with different props from the hook
 - **Integration**: Test the `ClientMount` component with mocked hook returns
+
+## Development Workflow
+
+### Task Runner (Taskfile.yml)
+This project includes a Taskfile for streamlined development:
+
+```yaml
+# Available tasks
+task              # Show all available tasks
+task install      # Install dependencies with pnpm
+task dev          # Start development server with Turbopack
+task build        # Build the production application
+task start        # Start production server
+task lint         # Run ESLint
+```
+
+### Development Commands
+- **pnpm**: Package management and script execution
+- **Turbopack**: Fast bundling for development and production
+- **ESLint**: Code quality and consistency
 
 ## Migration Path
 
@@ -308,14 +333,21 @@ import { ClientMount } from '@/page-modules/home/home.client';
 
 ### Starting a New Page
 1. Create directory in `page-modules/[page-name]/`
-2. Add the four core files: `{pageName}.server.ts`, `{pageName}.client.ts`, `{pageName}.view.ts`, `{pageName}.hook.ts`
-3. Create `components/` directory for page-specific components
-4. Create minimal route in `app/` that imports server components and `ClientMount`
+2. Add the four core files: `{pageName}.server.tsx`, `{pageName}.client.tsx`, `{pageName}.view.tsx`, `{pageName}.hook.ts`
+3. Create `components/` directory for page-specific components (if needed)
+4. Create minimal route in `app/` that imports server component
 5. Implement:
-   - **{pageName}.server.ts**: Data fetching and server components
+   - **{pageName}.server.tsx**: Data fetching and server component that renders client
    - **{pageName}.hook.ts**: `use{PageName}` hook with all client logic
-   - **{pageName}.view.ts**: Pure UI components that receive hook props
-   - **{pageName}.client.ts**: Simple mounting component that connects hook and view
+   - **{pageName}.view.tsx**: Pure UI components that receive hook props
+   - **{pageName}.client.tsx**: Simple mounting component that connects hook and view
+
+### Implemented Features
+This project includes working examples of:
+- **Home page**: Basic navigation and routing
+- **Dashboard page**: Complex state management with tab navigation
+- **Task runner integration**: Streamlined development workflow
+- **Tailwind CSS**: Modern styling with design tokens
 
 This modular architecture scales with your application and team, making it easier to maintain and extend as your project grows.
 

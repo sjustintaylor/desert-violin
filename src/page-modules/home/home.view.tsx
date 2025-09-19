@@ -4,7 +4,11 @@ interface PageViewProps {
   handleRegister: () => void;
 }
 
-export function PageView({ serverData, handleLogin, handleRegister }: PageViewProps) {
+export function HomeView({
+  serverData,
+  handleLogin,
+  handleRegister,
+}: PageViewProps) {
   return (
     <div className="min-h-screen bg-background">
       <div className="relative isolate px-6 pt-14 lg:px-8">

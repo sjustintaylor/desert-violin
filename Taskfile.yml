@@ -1,0 +1,31 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+  install:
+    cmds:
+      - pnpm i
+  dev:
+    desc: Start development server with Turbopack
+    cmds:
+      - pnpm dev
+
+  build:
+    desc: Build the production application with Turbopack
+    cmds:
+      - pnpm build
+
+  start:
+    desc: Start the production server
+    cmds:
+      - pnpm start
+
+  lint:
+    desc: Run ESLint
+    cmds:
+      - pnpm lint
