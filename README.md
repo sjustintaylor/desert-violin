@@ -28,10 +28,16 @@ src/
 │   │   ├── home.server.ts        # Server-side logic and data fetching
 │   │   ├── home.client.ts        # Client mounting component (wires hook + view)
 │   │   ├── home.view.ts          # Pure UI components
-│   │   ├── home.hook.ts          # useHomePage hook with ALL client-side logic
+│   │   ├── home.hook.ts          # useHome hook with ALL client-side logic
 │   │   └── components/           # Home-specific components
 │   │       ├── HeroSection.tsx
 │   │       └── FeatureGrid.tsx
+│   ├── about/
+│   │   ├── about.server.ts
+│   │   ├── about.client.ts
+│   │   ├── about.view.ts
+│   │   ├── about.hook.ts
+│   │   └── components/
 │   └── dashboard/
 │       ├── dashboard.server.ts
 │       ├── dashboard.client.ts
@@ -47,46 +53,46 @@ src/
 
 ## File Type Definitions
 
-### `page_name.server.ts`
+### `{pageName}.server.ts`
 **Purpose**: Server-side logic, data fetching, and server components
 ```typescript
-// Example: Fetch data, handle server-side operations
-export async function getPageData() {
+// Example: home.server.ts
+export async function getHomeData() {
   const data = await fetch('/api/data');
   return data.json();
 }
 
-export function ServerComponent({ data }: { data: any }) {
+export function HomeServerComponent({ data }: { data: any }) {
   return <div>Server-rendered content: {data.title}</div>;
 }
 ```
 
-### `page_name.client.ts`
+### `{pageName}.client.ts`
 **Purpose**: Client mounting component that wires together the page hook and view
 ```typescript
-// Example: Mount component that connects usePage hook with PageView
+// Example: home.client.ts
 'use client';
 
-import { PageView } from './page.view';
-import { usePage } from './page.hook';
+import { PageView } from './home.view';
+import { useHome } from './home.hook';
 
 export function ClientMount({ serverData }: { serverData: any }) {
-  const pageLogic = usePage({ serverData });
+  const pageLogic = useHome({ serverData });
 
   return <PageView {...pageLogic} />;
 }
 ```
 
-### `page_name.view.ts`
+### `{pageName}.view.ts`
 **Purpose**: Pure UI components with no business logic
 ```typescript
-// Example: Pure presentational components
-interface ViewProps {
+// Example: home.view.ts
+interface PageViewProps {
   data: any;
   onSubmit: (data: FormData) => void;
 }
 
-export function PageView({ data, onSubmit }: ViewProps) {
+export function PageView({ data, onSubmit }: PageViewProps) {
   return (
     <div>
       <h1>{data.title}</h1>
@@ -98,13 +104,13 @@ export function PageView({ data, onSubmit }: ViewProps) {
 }
 ```
 
-### `page_name.hook.ts`
-**Purpose**: Contains the main `usePage` hook with all client-side logic for the page
+### `{pageName}.hook.ts`
+**Purpose**: Contains the main `use{PageName}` hook with all client-side logic for the page
 ```typescript
-// Example: usePage hook containing ALL client-side logic
+// Example: home.hook.ts
 import { useState, useEffect } from 'react';
 
-export function usePageName({ serverData }: { serverData: any }) {
+export function useHome({ serverData }: { serverData: any }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({});
 
@@ -164,8 +170,8 @@ export default function Home() {
 ### Modular Approach (After)
 ```typescript
 // app/page.tsx - Minimal route definition
-import { getHomeData, HomeServerComponent } from '@/page-modules/home/page.server';
-import { ClientMount } from '@/page-modules/home/page.client';
+import { getHomeData, HomeServerComponent } from '@/page-modules/home/home.server';
+import { ClientMount } from '@/page-modules/home/home.client';
 
 export default async function Home() {
   const serverData = await getHomeData();
@@ -180,7 +186,7 @@ export default async function Home() {
 ```
 
 ```typescript
-// page-modules/home/page.server.ts
+// page-modules/home/home.server.ts
 export async function getHomeData() {
   // Server-side data fetching
   return { title: 'Welcome Home', items: [] };
@@ -193,24 +199,24 @@ export function HomeServerComponent({ data }) {
 ```
 
 ```typescript
-// page-modules/home/page.client.ts
+// page-modules/home/home.client.ts
 'use client';
 
-import { PageView } from './page.view';
-import { usePage } from './page.hook';
+import { PageView } from './home.view';
+import { useHome } from './home.hook';
 
 export function ClientMount({ serverData }: { serverData: any }) {
-  const pageLogic = usePage({ serverData });
+  const pageLogic = useHome({ serverData });
 
   return <PageView {...pageLogic} />;
 }
 ```
 
 ```typescript
-// page-modules/home/page.hook.ts
+// page-modules/home/home.hook.ts
 import { useState } from 'react';
 
-export function usePage({ serverData }: { serverData: any }) {
+export function useHome({ serverData }: { serverData: any }) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (data: FormData) => {
@@ -229,7 +235,7 @@ export function usePage({ serverData }: { serverData: any }) {
 ```
 
 ```typescript
-// page-modules/home/page.view.ts
+// page-modules/home/home.view.ts
 interface PageViewProps {
   serverData: any;
   loading: boolean;
@@ -259,36 +265,36 @@ export function PageView({ serverData, loading, handleSubmit }: PageViewProps) {
 - **Move to shared**: When the same logic or component is needed by 2+ pages
 - **Extract to library**: When logic becomes complex enough to warrant its own package
 
-### The usePageName Hook Pattern
-- **Single hook**: All client-side logic must be contained in the `usePage` hook
+### The use{PageName} Hook Pattern
+- **Single hook**: All client-side logic must be contained in the `use{PageName}` hook (e.g., `useHome`, `useDashboard`)
 - **Complete interface**: The hook should return everything the view needs as props
 - **Server data integration**: Accept server data as parameters and integrate with client state
-- **Event handlers**: All user interactions should be handled through functions returned by `usePage`
+- **Event handlers**: All user interactions should be handled through functions returned by the hook
 
 ### Import/Export Patterns
 ```typescript
 // ✅ Good: Clean exports from page modules
-export { getPageData, ServerComponent } from './page_name.server';
-export { ClientMount } from './page_name.client';
-export { PageView } from './page_name.view';
-export { usePage } from './page_name.hook';
+export { getHomeData, HomeServerComponent } from './home.server';
+export { ClientMount } from './home.client';
+export { PageView } from './home.view';
+export { useHome } from './home.hook';
 
 // ✅ Good: app/page.tsx imports only what it needs
-import { getPageData, ServerComponent } from '@/page-modules/home/page_name.server';
-import { ClientMount } from '@/page-modules/home/page_name.client';
+import { getHomeData, HomeServerComponent } from '@/page-modules/home/home.server';
+import { ClientMount } from '@/page-modules/home/home.client';
 ```
 
 ### Client Mounting Pattern
-- **page_name.client.ts role**: Only responsible for mounting - calls `usePageName` and renders `PageView`
+- **{pageName}.client.ts role**: Only responsible for mounting - calls `use{PageName}` and renders `PageView`
 - **'use client' directive**: Should be the only place this directive appears for the page
 - **No logic**: Should contain no business logic, state, or event handlers
-- **Data flow**: `app/page.tsx` → `ClientMount` → `usePage` → `PageView`
+- **Data flow**: `app/page.tsx` → `ClientMount` → `use{PageName}` → `PageView`
 
 ### Testing Strategies
 - **Server logic**: Test data fetching and server component rendering
-- **usePage hook**: Test all client-side logic by testing the `usePage` hook in isolation
-- **View components**: Test UI rendering with different props from `usePage`
-- **Integration**: Test the `ClientMount` component with mocked `usePage` returns
+- **use{PageName} hook**: Test all client-side logic by testing the page-specific hook in isolation
+- **View components**: Test UI rendering with different props from the hook
+- **Integration**: Test the `ClientMount` component with mocked hook returns
 
 ## Migration Path
 
@@ -302,14 +308,14 @@ import { ClientMount } from '@/page-modules/home/page_name.client';
 
 ### Starting a New Page
 1. Create directory in `page-modules/[page-name]/`
-2. Add the four core files: `page.server.ts`, `page.client.ts`, `page.view.ts`, `page.hook.ts`
+2. Add the four core files: `{pageName}.server.ts`, `{pageName}.client.ts`, `{pageName}.view.ts`, `{pageName}.hook.ts`
 3. Create `components/` directory for page-specific components
 4. Create minimal route in `app/` that imports server components and `ClientMount`
 5. Implement:
-   - **page.server.ts**: Data fetching and server components
-   - **page.hook.ts**: `usePage` hook with all client logic
-   - **page.view.ts**: Pure UI components that receive `usePage` props
-   - **page.client.ts**: Simple mounting component that connects hook and view
+   - **{pageName}.server.ts**: Data fetching and server components
+   - **{pageName}.hook.ts**: `use{PageName}` hook with all client logic
+   - **{pageName}.view.ts**: Pure UI components that receive hook props
+   - **{pageName}.client.ts**: Simple mounting component that connects hook and view
 
 This modular architecture scales with your application and team, making it easier to maintain and extend as your project grows.
 
